@@ -67,8 +67,8 @@ import {
 
 //import type { WaterFeatureProperties } from './types';
 import './FeaturePopup.css';
+const MAPBOX_TOKEN ="pk.eyJ1IjoicWlhb3hpbjEzNiIsImEiOiJjbGU1eXcyYTMwaHRyM29tc2dncjR6ZTBhIn0.8Wa3AEGbUSnau7PCEV3Stg" ;
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiaGF6ZW5zYXd5ZXIiLCJhIjoiY2xmMnY0NzE1MGMzMjNycGp6bDQwcWZsNyJ9.1JJeWIQgrykU5b3oqSr1sQ";
 const client = generateClient<Schema>();
 
 
@@ -624,7 +624,7 @@ function App() {
 
   return (
     <main>
-      <h1>Washington Park Project</h1>
+      <h1>BCWWS REGIONAL EFFLUENT AND REUSE SOLUTIONS -EFFLUENT WATER TRANSMISSION MAIN</h1>
       <Divider orientation="horizontal" />
       <br />
       <Flex>
@@ -720,8 +720,8 @@ function App() {
             content: (<>
               <Map
                 initialViewState={{
-                  longitude: -80.20321,
-                  latitude: 26.00068,
+                  longitude: -80.13289123074017,
+                  latitude: 26.260443058928075,
                   zoom: 16,
                 }}
                 mapboxAccessToken={MAPBOX_TOKEN}
@@ -769,51 +769,37 @@ function App() {
                   />
                 </Source>
 
-                <Source id="wMain" type="vector" url="mapbox://hazensawyer.5764gcxp">
+                <Source id="lines" type="vector" url="mapbox://qiaoxin136.6712mnvq">
                   <Layer
-                    id='water-lines'
+                    id='lines'
                     type='line'
-                    source='wMain'
-                    source-layer="wMain-1r1fzu"
+                    source='lines'
+                    source-layer="line-34gbbu"
                     paint={{
                       'line-width': 1,
                       // Use a get expression (https://docs.mapbox.comhttps://docs.mapbox.com/style-spec/reference/expressions/#get)
                       // to set the line-color to a feature property value.
-                      'line-color': "#2b6cb0",
+                      'line-color': "#b12bbd",
                       'line-dasharray': [4, 2]
                     }}
                   />
                 </Source>
-                <Source id="sgravity" type="vector" url="mapbox://hazensawyer.54mpxvz3">
+                <Source id="tick" type="vector" url="mapbox://qiaoxin136.3axmzn09">
                   <Layer
-                    id='gravity-lines'
+                    id='tick'
                     type='line'
-                    source='sgravity'
-                    source-layer="sGravity-d079ci"
+                    source='tick'
+                    source-layer="tick-d0etve"
                     paint={{
                       'line-width': 1,
                       // Use a get expression (https://docs.mapbox.comhttps://docs.mapbox.com/style-spec/reference/expressions/#get)
                       // to set the line-color to a feature property value.
-                      'line-color': "#2ea160",
+                      'line-color': "#959796",
                       'line-dasharray': [4, 2]
                     }}
                   />
                 </Source>
-                <Source id="sdrain" type="vector" url="mapbox://hazensawyer.6439un68">
-                  <Layer
-                    id='storm-lines'
-                    type='line'
-                    source='sdrain'
-                    source-layer="sDrain-7lho1y"
-                    paint={{
-                      'line-width': 1,
-                      // Use a get expression (https://docs.mapbox.comhttps://docs.mapbox.com/style-spec/reference/expressions/#get)
-                      // to set the line-color to a feature property value.
-                      'line-color': "#eca4a4",
-                      'line-dasharray': [4, 2]
-                    }}
-                  />
-                </Source>
+                
                 <Marker latitude={Number(lat)} longitude={Number(lng)} />
                 {popupInfo && (
                   <>
