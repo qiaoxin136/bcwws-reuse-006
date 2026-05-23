@@ -232,6 +232,13 @@ function App() {
   const [diComment, setDiComment] = useState("");
   const [diEquipment, setDiEquipment] = useState("");
 
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDateFields, setEditDateFields] = useState({
+    date: "", weather: "", hight: "" as number | "", lowt: "" as number | "",
+    supervisor: "", labor: "" as number | "", observation: "",
+    remark: "", comment: "", equipment: "",
+  });
+
 
 
   const options: SelectOption[] = [
@@ -539,6 +546,10 @@ function App() {
 
   function createDateInfo() {
     if (!date) return;
+    if (dateInfoList.some(item => item.date === date)) {
+      alert(`A record for ${date} already exists.`);
+      return;
+    }
     client.models.Date.create({
       date,
       weather: diWeather || undefined,
@@ -560,6 +571,23 @@ function App() {
     setDiRemark("");
     setDiComment("");
     setDiEquipment("");
+  }
+
+  function saveDateInfo(id: string) {
+    client.models.Date.update({
+      id,
+      date: editDateFields.date || undefined,
+      weather: editDateFields.weather || undefined,
+      hight: editDateFields.hight !== "" ? Number(editDateFields.hight) : undefined,
+      lowt: editDateFields.lowt !== "" ? Number(editDateFields.lowt) : undefined,
+      supervisor: editDateFields.supervisor || undefined,
+      labor: editDateFields.labor !== "" ? Number(editDateFields.labor) : undefined,
+      observation: editDateFields.observation || undefined,
+      remark: editDateFields.remark || undefined,
+      comment: editDateFields.comment || undefined,
+      equipment: editDateFields.equipment || undefined,
+    });
+    setEditingDateId(null);
   }
 
   function handleCal() {
@@ -1212,24 +1240,94 @@ function App() {
                             onChange={e => setDiEquipment(e.target.value)} style={{ width: '100%' }} />
                         </TableCell>
                         <TableCell>
-                          <button onClick={createDateInfo} disabled={!date}>Add</button>
+                          <button onClick={createDateInfo} disabled={!date} style={{ backgroundColor: 'green', color: 'white', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>Add</button>
                         </TableCell>
                       </TableRow>
-                      {[...dateInfoList].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).map(item => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.weather}</TableCell>
-                          <TableCell>{item.hight}</TableCell>
-                          <TableCell>{item.lowt}</TableCell>
-                          <TableCell>{item.supervisor}</TableCell>
-                          <TableCell>{item.labor}</TableCell>
-                          <TableCell>{item.observation}</TableCell>
-                          <TableCell>{item.remark}</TableCell>
-                          <TableCell>{item.comment}</TableCell>
-                          <TableCell>{item.equipment}</TableCell>
-                          <TableCell />
-                        </TableRow>
-                      ))}
+                      {[...dateInfoList].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).map(item => {
+                        const isEditing = editingDateId === item.id;
+                        const ef = editDateFields;
+                        const setEf = (field: keyof typeof editDateFields, val: string | number | "") =>
+                          setEditDateFields(prev => ({ ...prev, [field]: val }));
+                        return isEditing ? (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <input type="date" value={ef.date}
+                                onChange={e => setEf('date', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.weather}
+                                onChange={e => setEf('weather', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="number" value={ef.hight}
+                                onChange={e => setEf('hight', e.target.value === "" ? "" : Number(e.target.value))} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="number" value={ef.lowt}
+                                onChange={e => setEf('lowt', e.target.value === "" ? "" : Number(e.target.value))} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.supervisor}
+                                onChange={e => setEf('supervisor', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="number" value={ef.labor}
+                                onChange={e => setEf('labor', e.target.value === "" ? "" : Number(e.target.value))} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.observation}
+                                onChange={e => setEf('observation', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.remark}
+                                onChange={e => setEf('remark', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.comment}
+                                onChange={e => setEf('comment', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <input type="text" value={ef.equipment}
+                                onChange={e => setEf('equipment', e.target.value)} style={{ width: '100%' }} />
+                            </TableCell>
+                            <TableCell>
+                              <button onClick={() => saveDateInfo(item.id)} style={{ marginRight: 4, backgroundColor: 'green', color: 'white', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>Save</button>
+                              <button onClick={() => setEditingDateId(null)} style={{ backgroundColor: 'red', color: 'white', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>Cancel</button>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.date}</TableCell>
+                            <TableCell>{item.weather}</TableCell>
+                            <TableCell>{item.hight}</TableCell>
+                            <TableCell>{item.lowt}</TableCell>
+                            <TableCell>{item.supervisor}</TableCell>
+                            <TableCell>{item.labor}</TableCell>
+                            <TableCell>{item.observation}</TableCell>
+                            <TableCell>{item.remark}</TableCell>
+                            <TableCell>{item.comment}</TableCell>
+                            <TableCell>{item.equipment}</TableCell>
+                            <TableCell>
+                              <button onClick={() => {
+                                setEditingDateId(item.id);
+                                setEditDateFields({
+                                  date: item.date ?? "",
+                                  weather: item.weather ?? "",
+                                  hight: item.hight ?? "",
+                                  lowt: item.lowt ?? "",
+                                  supervisor: item.supervisor ?? "",
+                                  labor: item.labor ?? "",
+                                  observation: item.observation ?? "",
+                                  remark: item.remark ?? "",
+                                  comment: item.comment ?? "",
+                                  equipment: item.equipment ?? "",
+                                });
+                              }} style={{ backgroundColor: 'green', color: 'white', border: 'none', padding: '4px 10px', cursor: 'pointer', marginRight: 4 }}>Modify</button>
+                              <button onClick={() => { if (window.confirm(`Delete record for ${item.date}?`)) client.models.Date.delete({ id: item.id }); }} style={{ backgroundColor: 'red', color: 'white', border: 'none', padding: '4px 10px', cursor: 'pointer' }}>Delete</button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </ThemeProvider>
