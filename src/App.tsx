@@ -755,8 +755,10 @@ function App() {
           onChange={e => setJoint(e.target.value)}
         >
           <option value="joint">Joint</option>
-          <option value="bend">Bend</option>
-          <option value="valve">Valve</option>
+          <option value="90-bend">90-Bend</option>
+          <option value="45-bend">45-Bend</option>
+          <option value="11-bend">11-Bend</option>
+          <option value="plug-valve">Plug Valve</option>
         </select>
         <label style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
           <input
@@ -982,8 +984,10 @@ function App() {
                                   style={{ fontSize: '11px', padding: '2px 4px' }}
                                 >
                                   <option value="joint">Joint</option>
-                                  <option value="bend">Bend</option>
-                                  <option value="valve">Valve</option>
+                                  <option value="90-bend">90-Bend</option>
+                                  <option value="45-bend">45-Bend</option>
+                                  <option value="11-bend">11-Bend</option>
+                                  <option value="plug-valve">Plug Valve</option>
                                 </select>
                               </td>
                             </tr>
