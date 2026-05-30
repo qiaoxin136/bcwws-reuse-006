@@ -389,6 +389,10 @@ function App() {
       joint: joint,
 
     });
+
+    if (!trackInfoList.some(t => t.track === track)) {
+      client.models.Track.create({ track });
+    }
     setDate("");
     setTime("");
     setTrack(track);
@@ -632,6 +636,45 @@ function App() {
     setEditingDateId(null);
   }
 
+  function handleTrackFill() {
+    const LAT_FT = 364000; // feet per degree latitude
+    const polygonTracks = trackInfoList.filter(t => t.geometry === "polygon");
+    for (const trackRec of polygonTracks) {
+      const pts = [...location.filter(l => l.track === trackRec.track)]
+        .sort((a, b) => {
+          const da = `${a.date ?? ""}T${a.time ?? ""}`;
+          const db = `${b.date ?? ""}T${b.time ?? ""}`;
+          return da.localeCompare(db);
+        });
+      const n = pts.length;
+      if (n < 3) {
+        client.models.Track.update({ id: trackRec.id, numpoint: n, ft2: 0, yd2: 0 });
+        continue;
+      }
+      const midLat = pts.reduce((s, p) => s + (p.lat ?? 0), 0) / n;
+      const LNG_FT = LAT_FT * Math.cos((midLat * Math.PI) / 180);
+      // Shoelace formula in feet
+      let area = 0;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const xi = (pts[i].lng ?? 0) * LNG_FT;
+        const yi = (pts[i].lat ?? 0) * LAT_FT;
+        const xj = (pts[j].lng ?? 0) * LNG_FT;
+        const yj = (pts[j].lat ?? 0) * LAT_FT;
+        area += xi * yj - xj * yi;
+      }
+      const sqFt = Math.abs(area) / 2;
+      const sqYd = sqFt / 9;
+      client.models.Track.update({
+        id: trackRec.id,
+        numpoint: n,
+        ft2: Math.round(sqFt * 100) / 100,
+        yd2: Math.round(sqYd * 100) / 100,
+      });
+    }
+    setTab("4");
+  }
+
   function createTrackInfo() {
     if (newTrack.track === "") { alert("Track number is required."); return; }
     client.models.Track.create({
@@ -757,6 +800,9 @@ function App() {
         </Button>
         <Button onClick={handleCal} backgroundColor={"lightyellow"} color={"darkblue"}>
           QC
+        </Button>
+        <Button onClick={handleTrackFill} backgroundColor={"lightgreen"} color={"darkgreen"}>
+          Track Fill
         </Button>
         {calResult !== null && (
           <span style={{ alignSelf: "center", fontWeight: "bold" }}>
