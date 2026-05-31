@@ -8,6 +8,9 @@ export const imagesStorage = defineStorage({
       allow.authenticated.to(['write', 'read', 'delete']),
       allow.guest.to(['read'])
     ],
- 
+    'json/*': [
+      allow.authenticated.to(['write', 'read', 'delete']),
+      allow.guest.to(['read'])
+    ],
   })
 })

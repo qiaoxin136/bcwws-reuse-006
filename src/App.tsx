@@ -667,7 +667,7 @@ function App() {
     setEditingDateId(null);
   }
 
-  function handleTrackCal() {
+  async function handleTrackCal() {
     const LAT_FT = 364000;
     const sorted = [...trackInfoList].sort((a, b) => (a.track ?? 0) - (b.track ?? 0));
     for (const trackRec of sorted) {
@@ -709,6 +709,110 @@ function App() {
       }
     }
     setTab("4");
+
+    // Export polygon GeoJSON to S3 after all calculations are done
+    const polygonTracks = sorted.filter(t => t.geometry === "polygon");
+    const features = polygonTracks.map(trackRec => {
+      const pts = [...location.filter(l => l.track === trackRec.track)]
+        .sort((a, b) => {
+          const da = `${a.date ?? ""}T${a.time ?? ""}`;
+          const db = `${b.date ?? ""}T${b.time ?? ""}`;
+          return da.localeCompare(db);
+        });
+
+      const ring: [number, number][] = pts
+        .filter(p => p.lat != null && p.lng != null)
+        .map(p => [p.lng!, p.lat!]);
+
+      if (ring.length >= 3) ring.push(ring[0]);
+
+      const types = [...new Set(pts.map(p => p.type).filter(Boolean))].join(", ");
+
+      return {
+        type: "Feature" as const,
+        geometry: ring.length >= 4
+          ? { type: "Polygon" as const, coordinates: [ring] }
+          : { type: "MultiPoint" as const, coordinates: ring },
+        properties: {
+          track:         trackRec.track,
+          geometry:      trackRec.geometry,
+          ft2:           trackRec.ft2 ?? null,
+          yd2:           trackRec.yd2 ?? null,
+          unitprice:     trackRec.unitprice ?? null,
+          quan:          trackRec.quan ?? null,
+          value:         trackRec.value ?? null,
+          numpoint:      trackRec.numpoint ?? null,
+          trip:          trackRec.trip ?? null,
+          cost:          trackRec.cost ?? null,
+          location_type: types || null,
+        },
+      };
+    });
+
+    const geojson = { type: "FeatureCollection" as const, features };
+    try {
+      await uploadData({
+        path: "json/polygon.geojson",
+        data: JSON.stringify(geojson, null, 2),
+        options: { contentType: "application/geo+json" },
+      }).result;
+      console.log("polygon.geojson uploaded to S3 successfully.");
+    } catch (err) {
+      console.error("Failed to upload polygon.geojson to S3:", err);
+    }
+  }
+
+  function handleExportPolygon() {
+    const polygonTracks = [...trackInfoList]
+      .filter(t => t.geometry === "polygon")
+      .sort((a, b) => (a.track ?? 0) - (b.track ?? 0));
+
+    const features = polygonTracks.map(trackRec => {
+      const pts = [...location.filter(l => l.track === trackRec.track)]
+        .sort((a, b) => {
+          const da = `${a.date ?? ""}T${a.time ?? ""}`;
+          const db = `${b.date ?? ""}T${b.time ?? ""}`;
+          return da.localeCompare(db);
+        });
+
+      const ring: [number, number][] = pts
+        .filter(p => p.lat != null && p.lng != null)
+        .map(p => [p.lng!, p.lat!]);
+
+      if (ring.length >= 3) ring.push(ring[0]);
+
+      // Collect distinct type values from Location points in this track
+      const types = [...new Set(pts.map(p => p.type).filter(Boolean))].join(", ");
+
+      return {
+        type: "Feature" as const,
+        geometry: ring.length >= 4
+          ? { type: "Polygon" as const, coordinates: [ring] }
+          : { type: "MultiPoint" as const, coordinates: ring },
+        properties: {
+          track:         trackRec.track,
+          geometry:      trackRec.geometry,
+          ft2:           trackRec.ft2 ?? null,
+          yd2:           trackRec.yd2 ?? null,
+          unitprice:     trackRec.unitprice ?? null,
+          quan:          trackRec.quan ?? null,
+          value:         trackRec.value ?? null,
+          numpoint:      trackRec.numpoint ?? null,
+          trip:          trackRec.trip ?? null,
+          cost:          trackRec.cost ?? null,
+          location_type: types || null,
+        },
+      };
+    });
+
+    const geojson = { type: "FeatureCollection" as const, features };
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "polygon.geojson";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function createTrackInfo() {
@@ -839,6 +943,9 @@ function App() {
         </Button>
         <Button onClick={handleTrackCal} backgroundColor={"lightgreen"} color={"darkgreen"}>
           Track Cal
+        </Button>
+        <Button onClick={handleExportPolygon} backgroundColor={"lightyellow"} color={"darkorange"}>
+          Export Polygon
         </Button>
         {calResult !== null && (
           <span style={{ alignSelf: "center", fontWeight: "bold" }}>
